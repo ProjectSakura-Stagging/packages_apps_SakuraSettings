@@ -184,7 +184,7 @@ class TrickyStore : SettingsPreferenceFragment() {
 
                 progress.dismiss()
 
-                AlertDialog.Builder(requireContext())
+                val dialog = AlertDialog.Builder(requireContext())
                     .setTitle(R.string.ts_manage_target_apps)
                     .setMultiChoiceItems(labels, checked) { _, which, isChecked ->
                         checked[which] = isChecked
@@ -193,8 +193,22 @@ class TrickyStore : SettingsPreferenceFragment() {
                         saveTargetFile(packages, checked)
                         refreshStatus()
                     }
+                    .setNeutralButton(R.string.ts_auto_select, null)
                     .setNegativeButton(android.R.string.cancel, null)
                     .show()
+
+                dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
+                    checked.fill(false)
+                    for (i in packages.indices) {
+                        if (packages[i] in AUTO_SELECT_PACKAGES) {
+                            checked[i] = true
+                        }
+                    }
+                    val listView = dialog.listView
+                    for (i in packages.indices) {
+                        listView.setItemChecked(i, checked[i])
+                    }
+                }
             } catch (e: Exception) {
                 progress.dismiss()
                 toast(getString(R.string.ts_failed, e.message ?: ""))
@@ -319,5 +333,10 @@ class TrickyStore : SettingsPreferenceFragment() {
         private const val KEYBOX_FILE = "keybox.xml"
         private const val TARGET_FILE = "target.txt"
         private const val VENDING_PACKAGE = "com.android.vending"
+
+        private val AUTO_SELECT_PACKAGES = setOf(
+            "com.google.android.gms",
+            "com.android.vending",
+        )
     }
 }
